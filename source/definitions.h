@@ -18,7 +18,7 @@
 #ifndef RME_DEFINITIONS_H_
 #define RME_DEFINITIONS_H_
 
-#define __RME_APPLICATION_NAME__ "Remere's Map Editor"
+#define __RME_APPLICATION_NAME__ "Tibia Remere's Map Editor"
 #define __RME_WEBSITE_URL__      "https://otland.net"
 
 // Version info
@@ -32,7 +32,7 @@
 
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_(x)
-#define __RME_VERSION__ ("v" STRINGIFY(__RME_VERSION_MAJOR__) "." STRINGIFY(__RME_VERSION_MINOR__) "." STRINGIFY(__RME_VERSION_PATCH__) "T")
+#define __RME_VERSION__ (STRINGIFY(__RME_VERSION_MAJOR__) "." STRINGIFY(__RME_VERSION_MINOR__) "." STRINGIFY(__RME_VERSION_PATCH__))
 
 
 #endif

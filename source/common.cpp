@@ -341,7 +341,8 @@ wxColor colorFromEightBit(int color)
 
 wxString GetExecDirectory(void)
 {
-	return wxStandardPaths::Get().GetExecutablePath();
+	wxFileName fn(wxStandardPaths::Get().GetExecutablePath());
+	return fn.GetPath();
 }
 
 wxString NormalizeDir(const wxString &dir){

@@ -166,7 +166,7 @@ AboutWindow::AboutWindow(wxWindow* parent) :
 {
 	wxString about;
 
-	about << "Remere's Map Editor " << __RME_VERSION__ << " for ";
+	about << __RME_APPLICATION_NAME__ << " version " << __RME_VERSION__ << " for ";
 #ifdef __WINDOWS__
 	about << "Windows";
 #elif __LINUX__
@@ -200,19 +200,24 @@ AboutWindow::AboutWindow(wxWindow* parent) :
 	about << "\n";
 
 	topsizer = newd wxBoxSizer(wxVERTICAL);
-
 	topsizer->Add(newd wxStaticText(this, wxID_ANY, about), 1, wxALL, 20);
 
-	wxSizer* choicesizer = newd wxBoxSizer(wxHORIZONTAL);
-	choicesizer->Add(newd wxButton(this, wxID_OK, "OK"), wxSizerFlags(1).Center());
-	topsizer->Add(choicesizer, 0, wxALIGN_CENTER | wxLEFT | wxRIGHT | wxBOTTOM, 20);
+	{
+		wxSizer *buttonSizer = newd wxBoxSizer(wxHORIZONTAL);
+		buttonSizer->Add(newd wxButton(this, wxID_OK, "OK"),
+				wxSizerFlags(0).Border(wxLEFT | wxRIGHT, 5));
+		buttonSizer->Add(newd wxButton(this, ABOUT_VIEW_LICENSE, "License"),
+				wxSizerFlags(0).Border(wxLEFT | wxRIGHT, 5));
+		topsizer->Add(buttonSizer, wxSizerFlags(0).Center().Border(wxBOTTOM, 20));
+	}
 
-	wxAcceleratorEntry entries[3];
-	entries[0].Set(wxACCEL_NORMAL, WXK_ESCAPE, wxID_CANCEL);
-	entries[1].Set(wxACCEL_NORMAL, 't', ABOUT_RUN_TETRIS);
-	entries[2].Set(wxACCEL_NORMAL, 's', ABOUT_RUN_SNAKE);
-	wxAcceleratorTable accel(3, entries);
-	SetAcceleratorTable(accel);
+	wxAcceleratorEntry entries[] = {
+		wxAcceleratorEntry(wxACCEL_NORMAL, WXK_ESCAPE, wxID_CANCEL),
+		wxAcceleratorEntry(wxACCEL_NORMAL, 't', ABOUT_RUN_TETRIS),
+		wxAcceleratorEntry(wxACCEL_NORMAL, 's', ABOUT_RUN_SNAKE),
+	};
+
+	SetAcceleratorTable(wxAcceleratorTable(NARRAY(entries), entries));
 
 	SetSizerAndFit(topsizer);
 	Centre(wxBOTH);
@@ -232,12 +237,15 @@ void AboutWindow::OnClickLicense(wxCommandEvent& WXUNUSED(event))
 {
 	wxString gplText;
 	wxFileName path(GetExecDirectory(), "LICENSE.txt");
+	std::cout << path.GetFullPath() << std::endl;
 	std::ifstream gpl(path.GetFullPath().mb_str());
 	while(gpl){
 		char buffer[4096] = {};
 		int count = (int)gpl.readsome(buffer, sizeof(buffer));
 		if(count > 0){
 			gplText.insert(gplText.end(), buffer, buffer + count);
+		}else{
+			break;
 		}
 	}
 

@@ -182,10 +182,10 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& pos, const wxSize& si
 	// Receive idle events
 	SetExtraStyle(wxWS_EX_PROCESS_IDLE);
 
-	#if wxCHECK_VERSION(3, 1, 0) //3.1.0 or higher
-		// Make sure ShowFullScreen() uses the full screen API on macOS
-		EnableFullScreenView(true);
-    #endif
+#if wxCHECK_VERSION(3, 1, 0)
+	// Make sure ShowFullScreen() uses the full screen API on macOS
+	EnableFullScreenView(true);
+#endif
 
 	// Creates the file-dropdown menu
 	g_editor.menubar = newd MainMenuBar(this);
@@ -200,7 +200,7 @@ MainFrame::MainFrame(const wxString& title, const wxPoint& pos, const wxSize& si
 	g_editor.UpdateMenubar();
 
 	CreateStatusBar(5);
-	SetStatusText(wxString("Welcome to ") << __RME_APPLICATION_NAME__ << " " << __RME_VERSION__);
+	SetStatusText(wxString("Welcome to ") << __RME_APPLICATION_NAME__ << " version " << __RME_VERSION__);
 }
 
 MainFrame::~MainFrame(){

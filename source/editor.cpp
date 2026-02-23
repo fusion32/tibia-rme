@@ -764,7 +764,9 @@ void Editor::DestroyLoadBar()
 
 void Editor::ShowWelcomeDialog(const wxBitmap &icon) {
     std::vector<wxString> recent_files = GetRecentFiles();
-    welcomeDialog = newd WelcomeDialog(__RME_APPLICATION_NAME__, __RME_VERSION__, FROM_DIP(root, wxSize(800, 480)), icon, recent_files);
+    welcomeDialog = newd WelcomeDialog(__RME_APPLICATION_NAME__,
+			(wxString() << "Version " << __RME_VERSION__),
+			FROM_DIP(root, wxSize(800, 480)), icon, recent_files);
     welcomeDialog->Bind(wxEVT_CLOSE_WINDOW, &Editor::OnWelcomeDialogClosed, this);
     welcomeDialog->Bind(WELCOME_DIALOG_ACTION, &Editor::OnWelcomeDialogAction, this);
     welcomeDialog->Show();
@@ -910,9 +912,9 @@ void Editor::SetTitle(wxString title)
 		return;
 
 	if(!title.empty()) {
-		root->SetTitle(title << " - Remere's Map Editor");
+		root->SetTitle(title << " - " << __RME_APPLICATION_NAME__);
 	} else {
-		root->SetTitle(wxString("Remere's Map Editor"));
+		root->SetTitle(__RME_APPLICATION_NAME__);
 	}
 }
 

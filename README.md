@@ -1,46 +1,70 @@
-What is this?
-=============
+# Tibia Remere's Map Editor 7.7.0
+This is a map editor, based on the original Remere's Map Editor, modified to support [Tibia Game Server](https://github.com/fusion32/tibia-game). It should have the same features as the original RME, but I do expect problems so any issues should be submitted to the issue tracker with the appropriate description.
 
-This is a map editor for OpenTibia, which is an open source implementation of the MMORPG Tibia (which can be found at [tibia.com](http://tibia.com)), the official website is [remeresmapeditor.com](http://remeresmapeditor.com).
-You can find the project for hosting your own server at [the otserv project](https://github.com/opentibia/server).
-The main fansite for help, discussion and servers is [otland.net](http://otland.net).
+# Usage
+Although most of the original features are preserved, the notion of what is a map has drastically changed. The editor will now load a "project" directory, rather than a single map file, which should contain all files related to the project. This includes an `editor` directory with files related to editor menu, materials, and sprites. The sample `editor` in this repository was converted from the former `data/760`, and can be used as a starting point, although it is missing sprite files for obvious reasons.
 
-I want to contribute
-====================
+A minimal layout would look like this:
+```
+project/
+├── dat/
+│   ├── houseareas.dat
+│   ├── houses.dat
+│   ├── map.dat
+│   ├── mem.dat
+│   ├── monster.db
+│   └── objects.srv
+├── editor/
+│   ├── menubar.xml
+│   ├── materials.xml
+│   ├── Tibia.dat
+│   └── Tibia.spr
+├── mon/
+│   └── *.mon
+├── origmap/
+│   └── *.sec
+└── save/
+```
 
-Contributions are very welcome, if you would like to make any changes, fork this project or request commit access.
-I (Remere) am liberal to allowing any and all help and my involvement will be restricted to reviewing changes for now.
-Please, if you would like to contribute anything, documentation, extensions or code speak up!
+The workflow has also drastically changed. The baseline map is kept in `project/origmap` and changes to it are kept in `project/save` as patches. The editor will load these patches along with the baseline map to reconstruct the current saved version. They should be considered as integral part of the map. Spawns (`project/dat/monster.db`), houses (`project/dat/houseareas.dat` and `project/dat/houses.dat`), and marks (`project/dat/map.dat`) are stored whole in their own files. Backups are always made before saving to make sure there is always a fallback in case things go wrong.
 
-Bugs
-======
+When you're ready to export a patch, the `Export Patch...` tool can be used to generate a final ZIP containing all the relevant files that could have been modified. There is also an option to commit patches to the local baseline map (`project/origmap`) and is somewhat discussed in the next two paragraphs.
 
-Have you found a bug? Please create an issue in our [bug tracker](https://github.com/hjnilsson/rme/issues)
+The game server should be able to read the modified spawns, houses, and marks files as normal. The big difference, and the reason why the map is stored the way it is, is that the any patches in `game/save` directory are consumed **at startup** and applied to both persistent (`game/map`) and baseline (`game/origmap`) maps. Once it's done, it's done, and unless you made backup of both, there is no coming back. Next time you edit the project's map, you should have the project's baseline map synced with the server's, which is why you should commit patches locally when exporting to the server.
 
-Other Applications
-==========
+But... If you're familiar with the server's layout, you'll notice that it's pretty much the same as the project's layout. If you add the `editor` directory, it should load as a project without too much hassle. One thing to be aware tho, is that patches in `game/save` will be consumed everytime you startup the server, so you should make sure you're not editing the map and running the server at the same time, or at least that you reload the project after starting the server. This is one example where you don't want to commit patches locally when exporting a patch, nor exporting patches would make too much sense.
 
-* To host your MMORPG game server, you can use [The Forgotten Server](https://github.com/otland/forgottenserver).
-* To play your MMORPG game, you can use [OTClient](https://github.com/edubart/otclient)
-* To map your MMORPG game, you can use this map editor.
+For a robust setup, you should have the project's directory separate from the server's.
 
-Download
-========
+# Problems and Missing Features
+- Houses and Marks are still not supported, even though their files were mentioned above.
+- NPCs are not supported because they're unique, and specify their spawn position in their own files. It would require us to parse, modify, and save their files to fully support moving them around.
+- Adding, removing, and moving spawns will mark tiles as dirty. This will cause a patch to be generated for the involved tiles, even though no items have been modified. This has to do with how the action queue works currently and how spawns and items are tied together inside a tile. I have some thoughts on how to fix this but I still need to refine the idea.
 
-You can find official releases at [remeres mapeditor website](http://remeresmapeditor.com/marklar.php).
+# Compiling (Windows)
+There are probably multiple ways to compile on Windows but the CMake+VCPKG combo is probably the simplest so it's the one I'm using here. The only setup is to have GIT, MSVC, and VCPKG installed. Note that the MSVC installer will have options to get CMake and VCPKG, but for VCPKG specifically you'll probably want to get the standalone version, where you clone the repo and follow some instructions to bootstrap it. You'll also need to make sure the `VCPKG_ROOT` environment variable is propertly set to the root directory of the VCPKG installation, so CMake can find it.
 
-If you are looking for the 3.X version, download it [here](https://github.com/hjnilsson/rme/releases/) until It is added to the official website.
+If your setup is correct, you should be able to open the shell, traverse to a sensible directory, and run the commands below. If it complains about not finding `cl.exe` or any other command, then you might need to run on top of the MSVC shell (`x64 Native Tools Command Prompt for VS20XX`).
 
-Compiling
-=========
-Required libraries:
-* wxWidgets >= 3.0
-* Boost >= 1.55.0
+```
+git clone https://github.com/fusion32/tibia-rme.git
+cd tibia-rme
+cmake -B build --preset vcpkg-windows-static
+cmake --build build --config Release -j 4
+```
 
-[Compile on Windows](https://github.com/hjnilsson/rme/wiki/Compiling-on-Windows)
+# Compiling (Linux)
+The simplest way is to install FreeGLUT, wxWidgets, and ZLib from the package manager, then use CMake to configure and build.
 
-[Compile on Ubuntu](https://github.com/hjnilsson/rme/wiki/Compiling-on-Ubuntu)
+```
+# PACKAGES
+pacman -S freeglut wxwidgets-gtk3 zlib               # ARCH
+apt install freeglut3-dev libwxgtk3.2-dev zlib1g-dev # DEBIAN STABLE
 
-[Compile on Arch Linux](https://github.com/hjnilsson/rme/wiki/Compiling-on-Arch-Linux)
+# BUILD
+git clone https://github.com/fusion32/tibia-rme.git
+cd tibia-rme
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j 4
+```
 
-[Compile on macOS](https://github.com/hjnilsson/rme/wiki/Compiling-on-macOS)
