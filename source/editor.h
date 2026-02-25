@@ -427,10 +427,10 @@ protected:
 	//=========================================================================
 	// Progress bar tracking
 	//=========================================================================
+	wxStopWatch progressTimer = {};
 	wxString progressText = {};
 	int progressFrom = 0;
 	int progressTo = 0;
-	int progress = 0;
 	wxGenericProgressDialog *progressBar = NULL;
 
 	// ??

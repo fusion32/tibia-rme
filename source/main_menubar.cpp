@@ -786,7 +786,7 @@ namespace OnSearchForStuff
 
 		bool operator()(Tile *tile, Item *item, double progress)
 		{
-			if(progress > nextUpdate){
+			if(progress >= nextUpdate){
 				g_editor.SetLoadDone((int)(progress * 100.0));
 				nextUpdate = progress + 0.01;
 			}

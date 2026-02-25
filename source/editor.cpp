@@ -714,7 +714,6 @@ void Editor::CreateLoadBar(wxString message, bool canCancel /* = false */)
 	progressText = message;
 	progressFrom = 0;
 	progressTo   = 100;
-	progress     = -1;
 	progressBar  = newd wxGenericProgressDialog("Loading", progressText + " (0%)",
 			100, root, wxPD_APP_MODAL | wxPD_SMOOTH | (canCancel ? wxPD_CAN_ABORT : 0));
 
@@ -732,15 +731,19 @@ void Editor::SetLoadScale(int from, int to)
 
 bool Editor::SetLoadDone(int done, const wxString& newMessage)
 {
-	if(!progressBar){
+	// NOTE(fusion): Make that there is a progress bar running and that we don't
+	// update it too frequently. It seems that on Windows it could slow down things
+	// significantly.
+	if(!progressBar || progressTimer.Time() <= 1000){
 		return true;
 	}
 
+	progressTimer.Start(0);
 	if(!newMessage.empty()) {
 		progressText = newMessage;
 	}
 
-	progress = progressFrom + (int)((done / 100.0) * (progressTo - progressFrom));
+	int progress = progressFrom + (int)((done / 100.0) * (progressTo - progressFrom));
 	if(progress < 0)   progress = 0;
 	if(progress > 100) progress = 100;
 	return progressBar->Update(progress, (wxString() << progressText << " (" << progress << "%)"));
@@ -752,7 +755,6 @@ void Editor::DestroyLoadBar()
 		progressBar->Show(false);
 		progressBar->Destroy();
 		progressBar = nullptr;
-		progress = -1;
 
 		if(root->IsActive()) {
 			root->Raise();

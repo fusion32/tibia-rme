@@ -44,16 +44,20 @@ static bool BackupFiles(const wxFileName &outputName,
 	}
 
 	{
+		int numDone = 0;
+		int numFiles = (int)filenames.size();
 		wxZipOutputStream zip(outputFile, 9);
 		for(const wxString &filename: filenames){
 			wxFileName relativeName(filename);
 			if(!relativeName.MakeRelativeTo(baseDir)){
 				g_editor.Warning(wxString() << "Backup base directory "
 						<< baseDir << " doesn't contain " << filename);
+				numDone += 1;
 				continue;
 			}
 
-			g_editor.SetLoadDone(99, wxString() << "Backing up " << relativeName.GetFullName() << "...");
+			g_editor.SetLoadDone((numDone * 100) / numFiles,
+					wxString() << "Backing up " << relativeName.GetFullName() << "...");
 
 			wxFileInputStream inputStream(filename);
 			if(!inputStream.IsOk()){
@@ -67,6 +71,7 @@ static bool BackupFiles(const wxFileName &outputName,
 			}
 
 			zip << inputStream;
+			numDone += 1;
 		}
 
 		if(!zip.Close()){
@@ -784,13 +789,16 @@ bool Map::save(const wxString &projectDir)
 		}
 	}
 
+	int numSaved = 0;
+	int numSectors = (int)sectors.size();
 	int nextPatchNumber = 0;
 	int fullPatchThreshold = (MAP_SECTOR_SIZE * MAP_SECTOR_SIZE) / 2;
 	for(const auto &[sectorId, sector]: sectors){
-		g_editor.SetLoadDone(99, wxString() << "Saving sector "
-				<< (sector.tiles[0].pos.x / MAP_SECTOR_SIZE) << "-"
-				<< (sector.tiles[0].pos.y / MAP_SECTOR_SIZE) << "-"
-				<< (sector.tiles[0].pos.z) << "...");
+		g_editor.SetLoadDone((numSaved * 100) / numSectors,
+				wxString() << "Saving sector "
+					<< (sector.tiles[0].pos.x / MAP_SECTOR_SIZE) << "-"
+					<< (sector.tiles[0].pos.y / MAP_SECTOR_SIZE) << "-"
+					<< (sector.tiles[0].pos.z) << "...");
 
 		int numDirty = 0;
 		for(const Tile &tile: sector.tiles){
@@ -811,6 +819,8 @@ bool Map::save(const wxString &projectDir)
 			savePatch(saveDir, &sector, nextPatchNumber);
 			nextPatchNumber += 1;
 		}
+
+		numSaved += 1;
 	}
 
 	saveSpawns(spawnsFile);
@@ -898,6 +908,8 @@ bool Map::exportPatch(const wxString &projectDir,
 		}
 
 		// NOTE(fusion): Save patched map.
+		int numSaved = 0;
+		int numSectors = (int)sectors.size();
 		wxString mapDir = ConcatPath(projectDir, "origmap");
 		for(auto &[sectorId, sector]: sectors){
 			bool empty = true;
@@ -906,13 +918,17 @@ bool Map::exportPatch(const wxString &projectDir,
 				tile.clearTileFlag(TILE_FLAG_DIRTY);
 			}
 
-			if(!empty){
-				g_editor.SetLoadDone(99, wxString() << "Saving sector "
+			g_editor.SetLoadDone((numSaved * 100) / numSectors,
+					wxString() << "Saving sector "
 						<< (sector.tiles[0].pos.x / MAP_SECTOR_SIZE) << "-"
 						<< (sector.tiles[0].pos.y / MAP_SECTOR_SIZE) << "-"
 						<< (sector.tiles[0].pos.z) << "...");
+
+			if(!empty){
 				saveSector(mapDir, &sector);
 			}
+
+			numSaved += 1;
 		}
 
 		// NOTE(fusion): We cleared the DIRTY flag from all current tiles in the
