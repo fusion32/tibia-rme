@@ -1034,18 +1034,13 @@ void MainMenuBar::OnJumpToBrush(wxCommandEvent& WXUNUSED(event))
 	if(!g_editor.IsProjectOpen())
 		return;
 
-	// Create the jump to dialog
-	FindDialog* dlg = newd FindBrushDialog(frame);
+	FindBrushDialog dlg(frame);
+	dlg.ShowModal();
 
-	// Display dialog to user
-	dlg->ShowModal();
-
-	// Retrieve result, if null user canceled
-	const Brush* brush = dlg->getResult();
+	const Brush* brush = dlg.getResult();
 	if(brush) {
 		g_editor.SelectBrush(brush, TILESET_UNKNOWN);
 	}
-	delete dlg;
 }
 
 void MainMenuBar::OnJumpToItemBrush(wxCommandEvent& WXUNUSED(event))
@@ -1053,7 +1048,6 @@ void MainMenuBar::OnJumpToItemBrush(wxCommandEvent& WXUNUSED(event))
 	if(!g_editor.IsProjectOpen())
 		return;
 
-	// Create the jump to dialog
 	FindItemDialog dialog(frame, "Jump to Item");
 	dialog.setSearchMode((FindItemDialog::SearchMode)g_settings.getInteger(Config::JUMP_TO_ITEM_MODE));
 	if(dialog.ShowModal() == wxID_OK) {
@@ -1063,7 +1057,6 @@ void MainMenuBar::OnJumpToItemBrush(wxCommandEvent& WXUNUSED(event))
 			g_editor.SelectBrush(brush, TILESET_RAW);
 		g_settings.setInteger(Config::JUMP_TO_ITEM_MODE, (int)dialog.getSearchMode());
 	}
-	dialog.Destroy();
 }
 
 void MainMenuBar::OnGotoPreviousPosition(wxCommandEvent& WXUNUSED(event))
@@ -1076,7 +1069,6 @@ void MainMenuBar::OnGotoPosition(wxCommandEvent& WXUNUSED(event))
 	if(!g_editor.IsProjectOpen())
 		return;
 
-	// Display dialog, it also controls the actual jump
 	GotoPositionDialog dlg(frame);
 	dlg.ShowModal();
 }
@@ -1102,7 +1094,6 @@ void MainMenuBar::OnMapRemoveItems(wxCommandEvent& WXUNUSED(event))
 		g_editor.PopupDialog("Search completed", msg, wxOK);
 		g_editor.RefreshView();
 	}
-	dialog.Destroy();
 }
 
 void MainMenuBar::OnMapRemoveCorpses(wxCommandEvent& WXUNUSED(event))

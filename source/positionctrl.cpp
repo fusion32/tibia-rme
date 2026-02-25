@@ -21,19 +21,19 @@
 #include "position.h"
 
 PositionCtrl::PositionCtrl(wxWindow* parent, Position min, Position max, Position pos)
-	: wxControl()
+	: wxControl(parent, wxID_ANY)
 {
 	wxSizer *sizer = newd wxBoxSizer(wxHORIZONTAL);
 
-	x_field = newd NumberCtrl(parent, wxID_ANY, wxDefaultPosition, wxSize(60, 20), wxTE_PROCESS_ENTER, min.x, max.x, pos.x, "X");
+	x_field = newd NumberCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(60, 20), wxTE_PROCESS_ENTER, min.x, max.x, pos.x, "X");
 	x_field->Bind(wxEVT_TEXT_PASTE, &PositionCtrl::OnClipboardText, this);
 	sizer->Add(x_field, 2, wxEXPAND | wxLEFT | wxBOTTOM, 5);
 
-	y_field = newd NumberCtrl(parent, wxID_ANY, wxDefaultPosition, wxSize(60, 20), wxTE_PROCESS_ENTER, min.y, max.y, pos.y, "Y");
+	y_field = newd NumberCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(60, 20), wxTE_PROCESS_ENTER, min.y, max.y, pos.y, "Y");
 	y_field->Bind(wxEVT_TEXT_PASTE, &PositionCtrl::OnClipboardText, this);
 	sizer->Add(y_field, 2, wxEXPAND | wxLEFT | wxBOTTOM, 5);
 
-	z_field = newd NumberCtrl(parent, wxID_ANY, wxDefaultPosition, wxSize(35, 20), wxTE_PROCESS_ENTER, min.z, max.z, pos.z, "Z");
+	z_field = newd NumberCtrl(this, wxID_ANY, wxDefaultPosition, wxSize(35, 20), wxTE_PROCESS_ENTER, min.z, max.z, pos.z, "Z");
 	z_field->Bind(wxEVT_TEXT_PASTE, &PositionCtrl::OnClipboardText, this);
 	sizer->Add(z_field, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 5);
 

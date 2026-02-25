@@ -237,7 +237,6 @@ void AboutWindow::OnClickLicense(wxCommandEvent& WXUNUSED(event))
 {
 	wxString gplText;
 	wxFileName path(GetExecDirectory(), "LICENSE.txt");
-	std::cout << path.GetFullPath() << std::endl;
 	std::ifstream gpl(path.GetFullPath().mb_str());
 	while(gpl){
 		char buffer[4096] = {};
