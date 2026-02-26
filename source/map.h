@@ -60,25 +60,34 @@ inline uint32_t GetMapSectorId(int x, int y, int z){
 		| (((uint32_t)x & ~MAP_SECTOR_MASK) >> 4);
 }
 
+// IMPORTANT(fusion): We're storing tiles in column major order. This shouldn't
+// affect performance, but it's the way they're are stored in sector and patch
+// files so it simplifies the saving loop (only marginally, but iterating items
+// in linear order will always be more optimal than not, so there is that).
+
+inline int GetTileIndex(int offsetX, int offsetY){
+	return offsetX * MAP_SECTOR_SIZE + offsetY;
+}
+
 struct MapSector{
 	MapSector(void) = default;
 
 	void setTilePositions(int baseX, int baseY, int baseZ){
-		for(int offsetY = 0; offsetY < MAP_SECTOR_SIZE; offsetY += 1)
-		for(int offsetX = 0; offsetX < MAP_SECTOR_SIZE; offsetX += 1){
+		for(int offsetX = 0; offsetX < MAP_SECTOR_SIZE; offsetX += 1)
+		for(int offsetY = 0; offsetY < MAP_SECTOR_SIZE; offsetY += 1){
 			Position tilePos = {
 				baseX + offsetX,
 				baseY + offsetY,
 				baseZ,
 			};
 
-			tiles[offsetY * MAP_SECTOR_SIZE + offsetX].pos = tilePos;
+			tiles[GetTileIndex(offsetX, offsetY)].pos = tilePos;
 		}
 	}
 
 	Tile *getTile(int offsetX, int offsetY){
 		Tile *tile = NULL;
-		int index = offsetY * MAP_SECTOR_SIZE + offsetX;
+		int index = GetTileIndex(offsetX, offsetY);
 		if(index >= 0 && index < NARRAY(tiles)){
 			tile = &tiles[index];
 		}

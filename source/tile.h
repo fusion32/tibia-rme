@@ -29,6 +29,8 @@ enum {
 
 	TILE_FLAG_OPTIONAL_BORDER = 0x40,
 	TILE_FLAG_DIRTY           = 0x80,
+
+	TILE_PERSISTENT_FLAGS     = (TILE_FLAG_REFRESH | TILE_FLAG_NOLOGOUT | TILE_FLAG_PROTECTIONZONE),
 };
 
 struct Tile {
@@ -72,7 +74,6 @@ struct Tile {
 	int addItems(Item *first);
 	void clearCreature(void);
 	void placeCreature(int raceId, int spawnRadius, int spawnAmount, int spawnInterval);
-	void removeCreature(void);
 	int getIndexOf(Item *item) const;
 	Item *getItemAt(int index) const;
 	Item *getTopItem(void) const;

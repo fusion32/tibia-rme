@@ -57,7 +57,7 @@ static bool BackupFiles(const wxFileName &outputName,
 			}
 
 			g_editor.SetLoadDone((numDone * 100) / numFiles,
-					wxString() << "Backing up " << relativeName.GetFullName() << "...");
+					wxString() << "Backing up " << relativeName.GetFullName() << " ...");
 
 			wxFileInputStream inputStream(filename);
 			if(!inputStream.IsOk()){
@@ -168,7 +168,9 @@ static void SaveObjects(ScriptWriter *script, const Item *first){
 		script->writeNumber(item->getID());
 
 		for(int attr = 0; attr < NUM_INSTANCE_ATTRIBUTES; attr += 1){
-			if(attr == CONTENT || item->getAttributeOffset((ObjectInstanceAttribute)attr) == -1){
+			if(attr == CONTENT
+					|| item->getAttributeOffset((ObjectInstanceAttribute)attr) == -1
+					|| item->getAttribute((ObjectInstanceAttribute)attr) == 0){
 				continue;
 			}
 
@@ -182,7 +184,7 @@ static void SaveObjects(ScriptWriter *script, const Item *first){
 			}
 		}
 
-		if(item->getAttributeOffset(CONTENT) != -1){
+		if(item->getAttributeOffset(CONTENT) != -1 && item->content != NULL){
 			script->writeText(" Content=");
 			SaveObjects(script, item->content);
 		}
@@ -550,6 +552,14 @@ bool Map::saveSector(const wxString &dir, const MapSector *sector){
 	script.writeLn();
 
 	for(const Tile &tile: sector->tiles){
+		// NOTE(fusion): Avoid storing empty tiles on a sector file. If it's
+		// used as a patch, all sector tiles are cleared before applying it so
+		// it doesn't make a difference. This is different from a regular patch
+		// file (see Map::savePatch).
+		if(tile.items == NULL && !tile.getTileFlag(TILE_PERSISTENT_FLAGS)){
+			continue;
+		}
+
 		int offsetX = tile.pos.x & MAP_SECTOR_MASK;
 		int offsetY = tile.pos.y & MAP_SECTOR_MASK;
 		SaveTile(&script, offsetX, offsetY, &tile);
@@ -600,6 +610,9 @@ bool Map::savePatch(const wxString &dir, const MapSector *sector, int patchNumbe
 			continue;
 		}
 
+		// NOTE(fusion): Even if the tile is empty, we still want to store it
+		// in a patch file, to make sure the tile gets cleared when the patch
+		// is applied.
 		int offsetX = tile.pos.x & MAP_SECTOR_MASK;
 		int offsetY = tile.pos.y & MAP_SECTOR_MASK;
 		SaveTile(&script, offsetX, offsetY, &tile);
@@ -683,8 +696,8 @@ bool Map::saveSpawns(const wxString &filename){
 
 				// TODO(fusion): Some groups follow this ascending, descending,
 				// and others don't seem to follow this at all.
-				int aOffset = aOffsetY * MAP_SECTOR_SIZE + aOffsetX;
-				int bOffset = bOffsetY * MAP_SECTOR_SIZE + bOffsetX;
+				int aOffset = GetTileIndex(aOffsetX, aOffsetY);
+				int bOffset = GetTileIndex(bOffsetX, bOffsetY);
 				return aOffset < bOffset;
 			});
 	}
@@ -798,7 +811,7 @@ bool Map::save(const wxString &projectDir)
 				wxString() << "Saving sector "
 					<< (sector.tiles[0].pos.x / MAP_SECTOR_SIZE) << "-"
 					<< (sector.tiles[0].pos.y / MAP_SECTOR_SIZE) << "-"
-					<< (sector.tiles[0].pos.z) << "...");
+					<< (sector.tiles[0].pos.z) << " ...");
 
 		int numDirty = 0;
 		for(const Tile &tile: sector.tiles){
@@ -922,7 +935,7 @@ bool Map::exportPatch(const wxString &projectDir,
 					wxString() << "Saving sector "
 						<< (sector.tiles[0].pos.x / MAP_SECTOR_SIZE) << "-"
 						<< (sector.tiles[0].pos.y / MAP_SECTOR_SIZE) << "-"
-						<< (sector.tiles[0].pos.z) << "...");
+						<< (sector.tiles[0].pos.z) << " ...");
 
 			if(!empty){
 				saveSector(mapDir, &sector);
@@ -981,7 +994,7 @@ MapSector *Map::getSectorAt(int x, int y, int z){
 
 MapSector *Map::getOrCreateSectorAt(int x, int y, int z){
 	if(!PositionValid(x, y, z)){
-		// NOTE(fusion): This is just to make sure we don't return a NULL
+		// NOTE(fusion): This is just to make sure we don't return NULL.
 		static MapSector outOfBounder;
 		return &outOfBounder;
 	}

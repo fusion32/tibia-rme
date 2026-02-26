@@ -288,26 +288,28 @@ void MapDrawer::DrawMap()
 					continue;
 				}
 
-				for(int offsetY = 0; offsetY < MAP_SECTOR_SIZE; offsetY += 1)
-				for(int offsetX = 0; offsetX < MAP_SECTOR_SIZE; offsetX += 1){
-					Tile *tile = sector->getTile(offsetX, offsetY);
-					if(!tile || tile->empty()){
+				// IMPORTANT(fusion): Either column major or row major works here.
+				// The important bit is that both columns and rows are stored in
+				// ascending order, which should always be the case, unless we're
+				// doing something stupid.
+				for(Tile &tile: sector->tiles){
+					if(tile.empty()){
 						continue;
 					}
 
-					if(tile->pos.x < start_x || tile->pos.x > end_x
-					|| tile->pos.y < start_y || tile->pos.y > end_y){
+					if(tile.pos.x < start_x || tile.pos.x > end_x
+					|| tile.pos.y < start_y || tile.pos.y > end_y){
 						continue;
 					}
 
-					DrawTile(tile);
+					DrawTile(&tile);
 
 					if(draw_lights){
-						AddLight(tile);
+						AddLight(&tile);
 					}
 
 					if(tile_indicators){
-						DrawTileIndicators(tile);
+						DrawTileIndicators(&tile);
 					}
 				}
 			}
