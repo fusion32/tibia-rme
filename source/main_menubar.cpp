@@ -413,63 +413,81 @@ void MainMenuBar::UpdateIndicatorsMenu()
 }
 
 void MainMenuBar::LoadDefault(void){
-	while(GetMenuCount() > 0){
-		Remove(0);
+	static const char defaultMenu[] = R"XML(
+	<?xml version="1.0" encoding="UTF-8"?>
+	<menubar>
+		<menu name="$File">
+			<item name="$Open..." hotkey="Ctrl+O" action="OPEN" help="Open project."/>
+			<item name="$Save" hotkey="Ctrl+S" action="SAVE" help="Save project."/>
+			<item name="$Close" hotkey="Ctrl+Q" action="CLOSE" help="Close project."/>
+			<separator/>
+			<menu name="Recent $Files" special="RECENT_FILES"/>
+			<item name="$Preferences" action="PREFERENCES" help="Configure editor."/>
+			<item name="E$xit" action="EXIT" help="Close editor."/>
+		</menu>
+		<menu name="$About">
+			<item name="Goto $Website" hotkey="F3" action="GOTO_WEBSITE"/>
+			<item name="$About..." hotkey="F1" action="ABOUT"/>
+		</menu>
+	</menubar>
+	)XML";
+
+	pugi::xml_document doc;
+	pugi::xml_parse_result result = doc.load_buffer(defaultMenu, sizeof(defaultMenu));
+	if(!result){
+		g_editor.Error(wxString() << "Unable to load default menu: " << result.description());
+		return;
 	}
 
-	wxMenu *recentFiles = newd wxMenu;
-	g_editor.recentFiles.UseMenu(recentFiles);
-
-	wxMenu *fileMenu = newd wxMenu("File");
-	fileMenu->Append(MENUBAR_OPEN,        "Open\tCtrl+O",  "Open project.");
-	fileMenu->Append(MENUBAR_SAVE,        "Save\tCtrl+S",  "Save project.");
-	fileMenu->Append(MENUBAR_CLOSE,       "Close\tCtrl+Q", "Close project.");
-	fileMenu->AppendSeparator();
-	fileMenu->AppendSubMenu(recentFiles,                   "Recent Files",  "");
-	fileMenu->Append(MENUBAR_PREFERENCES, "Preferences",   "Configure editor.");
-	fileMenu->Append(MENUBAR_CLOSE,       "Exit",          "Close editor.");
-
-	Append(fileMenu, "File");
-
-	wxAcceleratorEntry accelerators[] = {
-		wxAcceleratorEntry(wxACCEL_CTRL, 'O', MENUBAR_OPEN),
-		wxAcceleratorEntry(wxACCEL_CTRL, 'S', MENUBAR_SAVE),
-		wxAcceleratorEntry(wxACCEL_CTRL, 'Q', MENUBAR_CLOSE),
-	};
-
-	frame->SetAcceleratorTable(wxAcceleratorTable(
-			NARRAY(accelerators), accelerators));
-
-	g_editor.recentFiles.AddFilesToMenu();
-	Update();
-	LoadValues();
+	if(!LoadDocument(doc, "DefaultMenu")){
+		g_editor.Error("Failed to load default menu");
+		return;
+	}
 }
 
-bool MainMenuBar::Load(const wxString &projectDir)
-{
+bool MainMenuBar::Load(const wxString &projectDir){
 	wxString filename = ConcatPath(projectDir, "editor", "menubar.xml");
 	if(!wxFileName::Exists(filename)){
 		g_editor.Error("Unable to locate menubar.xml");
 		return false;
 	}
 
-	// Open the XML file
 	pugi::xml_document doc;
 	pugi::xml_parse_result result = doc.load_file(filename.mb_str());
 	if(!result) {
-		g_editor.Error(wxString() << "Unable to open " << filename << " for reading.");
+		g_editor.Error(wxString() << "Unable to load " << filename << ": " << result.description());
 		return false;
 	}
 
+	return LoadDocument(doc, filename);
+}
+
+bool MainMenuBar::LoadDocument(pugi::xml_document &doc, const wxString &name){
 	pugi::xml_node node = doc.child("menubar");
 	if(!node) {
-		g_editor.Error(wxString() << "Menu file " << filename << "is missing top-level menubar node.");
+		g_editor.Error(wxString() << name << ": Menu is missing top-level menubar node.");
 		return false;
 	}
 
-	// Clear the menu
-	while(GetMenuCount() > 0){
-		Remove(0);
+
+	{
+		// NOTE(fusion): Remove recent files menus from the file history. It
+		// would keep dangling pointers if we didn't.
+		wxList recentMenus = g_editor.recentFiles.GetMenus();
+		for(wxObject *obj: recentMenus){
+			if(wxMenu *menu = dynamic_cast<wxMenu*>(obj)){
+				g_editor.recentFiles.RemoveMenu(menu);
+			}
+		}
+
+		// NOTE(fusion): Clear existing menus. Note that wxMenuBar::Remove won't
+		// automatically delete the removed menu so we need to do it manually to
+		// prevent leaks. Deleting menus should delete menu items within.
+		menuItems.clear();
+		while(GetMenuCount() > 0){
+			wxMenu *menu = Remove(0);
+			delete menu;
+		}
 	}
 
 	// Load succeded
@@ -486,7 +504,7 @@ bool MainMenuBar::Load(const wxString &projectDir)
 #endif
 		}else if(i){
 			delete i;
-			g_editor.Warning(wxString() << filename << ": Only menus can be subitems of main menu");
+			g_editor.Warning(wxString() << name << ": Only menus can be subitems of main menu");
 		}
 	}
 

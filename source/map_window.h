@@ -44,7 +44,7 @@ public:
 	void OnScrollPageUp(wxScrollEvent& event);
 	void OnGem(wxCommandEvent& event);
 
-	// Custom interface for MapWindow
+	double GetZoom(void);
 
 	// GetViewSize returns the size of the containing canvas, in pixels
 	void GetViewSize(int* x, int* y);

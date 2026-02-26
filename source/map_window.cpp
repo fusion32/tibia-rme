@@ -104,6 +104,11 @@ void MapWindow::UpdateDialogs(bool show)
 		replaceItemsDialog->Show(show);
 }
 
+double MapWindow::GetZoom(void)
+{
+	return canvas->GetZoom();
+}
+
 void MapWindow::GetViewStart(int* x, int* y)
 {
 	Position minPos = g_editor.map.getMinPosition();

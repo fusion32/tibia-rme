@@ -141,6 +141,7 @@ public:
 	void OnAbout(wxCommandEvent& event);
 
 protected:
+	bool LoadDocument(pugi::xml_document &doc, const wxString &name);
 	// Load and returns a menu item, also sets accelerator
 	wxObject* LoadItem(pugi::xml_node node, wxMenu* parent,
 			std::vector<wxAcceleratorEntry> &accelerators);
@@ -150,14 +151,13 @@ protected:
 	void SearchDuplicatedItems(bool selection);
 
 protected:
-
 	MainFrame* frame;
 
 	// Used so that calling Check on menu items don't trigger events (avoids infinite recursion)
 	bool checking_programmaticly;
 
-	std::unordered_map<int, std::vector<wxMenuItem*>> menuItems;
 	std::unordered_map<std::string, MenuBarAction> actions;
+	std::unordered_map<int, std::vector<wxMenuItem*>> menuItems;
 
 	DECLARE_EVENT_TABLE()
 };

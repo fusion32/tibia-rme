@@ -77,105 +77,81 @@ void MinimapWindow::OnDelayedUpdate(wxTimerEvent& event)
 void MinimapWindow::OnPaint(wxPaintEvent& event)
 {
 	wxBufferedPaintDC pdc(this);
-
 	pdc.SetBackground(*wxBLACK_BRUSH);
 	pdc.Clear();
 
-	if(!g_editor.IsProjectOpen()) return;
-	const Map &map = g_editor.map;
-
-	int window_width = GetSize().GetWidth();
-	int window_height = GetSize().GetHeight();
-	//printf("W:%d\tH:%d\n", window_width, window_height);
-	int center_x, center_y;
-
-	MapCanvas* canvas = g_editor.mapWindow->GetCanvas();
-	canvas->GetScreenCenter(&center_x, &center_y);
-
-	int start_x, start_y;
-	int end_x, end_y;
-	start_x = center_x - window_width/2;
-	start_y = center_y - window_height/2;
-
-	end_x = center_x + window_width/2;
-	end_y = center_y + window_height/2;
-
-	if(start_x < 0) {
-		start_x = 0;
-		end_x = window_width;
-	} else if(end_x > map.getWidth()) {
-		start_x = map.getWidth() - window_width;
-		end_x = map.getWidth();
-	}
-	if(start_y < 0) {
-		start_y = 0;
-		end_y = window_height;
-	} else if(end_y > map.getHeight()) {
-		start_y = map.getHeight() - window_height;
-		end_y = map.getHeight();
+	if(!g_editor.IsProjectOpen()){
+		return;
 	}
 
-	start_x = std::max(start_x, 0);
-	start_y = std::max(start_y, 0);
-	end_x = std::min(end_x, map.getWidth());
-	end_y = std::min(end_y, map.getHeight());
+	int windowWidth = GetSize().GetWidth();
+	int windowHeight = GetSize().GetHeight();
+	Position center = g_editor.mapWindow->GetScreenCenterPosition();
+	int startX = center.x - windowWidth / 2;
+	int startY = center.y - windowHeight / 2;
+	int z = center.z;
 
-	last_start_x = start_x;
-	last_start_y = start_y;
+	last_start_x = startX;
+	last_start_y = startY;
 
-	int floor = g_editor.GetCurrentFloor();
+	if(g_editor.IsRenderingEnabled()){
+		uint8_t lastColor = 0;
 
-	//printf("Draw from %d:%d to %d:%d\n", start_x, start_y, end_x, end_y);
-	uint8_t last = 0;
-	if(g_editor.IsRenderingEnabled()) {
-		for(int y = start_y, window_y = 0; y <= end_y; ++y, ++window_y) {
-			for(int x = start_x, window_x = 0; x <= end_x; ++x, ++window_x) {
-				const Tile* tile = map.getTile(x, y, floor);
-				if(tile) {
-					uint8_t color = tile->getMiniMapColor();
-					if(color) {
-						if(last != color) {
-							pdc.SetPen(*pens[color]);
-							last = color;
-						}
-						pdc.DrawPoint(window_x, window_y);
-					}
+		int minSectorX = startX                  / MAP_SECTOR_SIZE;
+		int minSectorY = startY                  / MAP_SECTOR_SIZE;
+		int maxSectorX = (startX + windowWidth)  / MAP_SECTOR_SIZE;
+		int maxSectorY = (startY + windowHeight) / MAP_SECTOR_SIZE;
+		int sectorZ    = z;
+
+		for(int sectorX = minSectorX; sectorX <= maxSectorX; sectorX += 1)
+		for(int sectorY = minSectorY; sectorY <= maxSectorY; sectorY += 1){
+			MapSector *sector = g_editor.map.getSectorAt(
+					sectorX * MAP_SECTOR_SIZE,
+					sectorY * MAP_SECTOR_SIZE,
+					sectorZ);
+			if(!sector){
+				continue;
+			}
+
+			for(const Tile &tile: sector->tiles){
+				int windowX = tile.pos.x - startX;
+				int windowY = tile.pos.y - startY;
+				if(windowX < 0 || windowX > windowWidth
+				|| windowY < 0 || windowY > windowHeight){
+					continue;
 				}
+
+				uint8_t color = tile.getMiniMapColor();
+				if(color == 0){
+					continue;
+				}
+
+				if(color != lastColor){
+					pdc.SetPen(*pens[color]);
+					lastColor = color;
+				}
+
+				pdc.DrawPoint(windowX, windowY);
 			}
 		}
 
-		if(g_settings.getInteger(Config::MINIMAP_VIEW_BOX)) {
+		if(g_settings.getInteger(Config::MINIMAP_VIEW_BOX)){
 			pdc.SetPen(*wxWHITE_PEN);
-			// Draw the rectangle on the minimap
 
-			// Some view info
-			int screensize_x, screensize_y;
-			int view_scroll_x, view_scroll_y;
+			int viewWidth, viewHeight, viewStartX, viewStartY;
+			g_editor.mapWindow->GetViewSize(&viewWidth, &viewHeight);
+			g_editor.mapWindow->GetViewStart(&viewStartX, &viewStartY);
+			double zoom = g_editor.mapWindow->GetZoom();
 
-			canvas->GetViewBox(&view_scroll_x, &view_scroll_y, &screensize_x, &screensize_y);
+			int left = (viewStartX / rme::TileSize) - startX;
+			int top = (viewStartY / rme::TileSize) - startY;
+			int right = left + ((viewWidth * zoom) / rme::TileSize) + 1;
+			int bottom = top + ((viewHeight * zoom) / rme::TileSize) + 1;
 
-			// bounds of the view
-			int view_start_x, view_start_y;
-			int view_end_x, view_end_y;
-
-			int tile_size = int(rme::TileSize / canvas->GetZoom()); // after zoom
-
-			int floor_offset = (floor > rme::MapGroundLayer ? 0 : (rme::MapGroundLayer - floor));
-
-			view_start_x = view_scroll_x / rme::TileSize + floor_offset;
-			view_start_y = view_scroll_y / rme::TileSize + floor_offset;
-
-			view_end_x = view_start_x + screensize_x / tile_size + 1;
-			view_end_y = view_start_y + screensize_y / tile_size + 1;
-
-			for(int x = view_start_x; x <= view_end_x; ++x) {
-				pdc.DrawPoint(x - start_x, view_start_y - start_y);
-				pdc.DrawPoint(x - start_x, view_end_y - start_y);
-			}
-			for(int y = view_start_y; y < view_end_y; ++y) {
-				pdc.DrawPoint(view_start_x - start_x, y - start_y);
-				pdc.DrawPoint(view_end_x - start_x, y - start_y);
-			}
+			pdc.DrawLine(left,  top,    left,  bottom);
+			pdc.DrawLine(left,  bottom, right, bottom);
+			pdc.DrawLine(right, bottom, right, top);
+			pdc.DrawLine(right, top,    left,  top);
 		}
 	}
 }
