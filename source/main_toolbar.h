@@ -45,7 +45,7 @@ public:
 	void OnBrushesButtonClick(wxCommandEvent& event);
 	void OnPositionButtonClick(wxCommandEvent& event);
 	void OnPositionKeyUp(wxKeyEvent& event);
-	void OnPastePositionText(wxClipboardTextEvent& event);
+	void OnPositionPasteText(wxClipboardTextEvent& event);
 	void OnSizesButtonClick(wxCommandEvent& event);
 	void OnIndicatorsButtonClick(wxCommandEvent& event);
 

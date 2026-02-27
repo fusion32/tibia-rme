@@ -222,46 +222,48 @@ std::string wstring2string(const std::wstring& widestring)
 	return std::string((const char*)s.mb_str(wxConvUTF8));
 }
 
-bool posFromClipboard(int& x, int& y, int& z)
+bool posFromClipboard(int &x, int &y, int &z)
 {
-	bool done = false;
-
+	bool result = false;
 	if(wxTheClipboard->Open()) {
 		if(wxTheClipboard->IsSupported(wxDF_TEXT)) {
-			std::vector<int> values;
 			wxTextDataObject data;
 			wxTheClipboard->GetData(data);
 			wxString text = data.GetText();
 
-			if(text.size() < 50) {
-				bool r = false;
-				wxString sv;
-
-				for(size_t s = 0; s < text.size(); ++s) {
-					if(text[s] >= '0' && text[s] <= '9') {
-						sv << text[s];
-						r = true;
-					} else if(r) {
-						values.push_back(ws2i(sv));
-						sv.Clear();
-						r = false;
-
-						if(values.size() >= 3)
-							break;
+			// NOTE(fusion): Just grab the first three numbers we can find.
+			int count = 0;
+			int numbers[3] = {};
+			bool wordStart = true;
+			for(size_t i = 0; i < text.Length() && count < NARRAY(numbers); i += 1){
+				if(!isalpha(text[i]) && !isdigit(text[i])){
+					wordStart = true;
+				}else if(wordStart){
+					size_t j = i;
+					int number = 0;
+					while(j < text.Length() && isdigit(text[j])){
+						number = number * 10 + (text[j] - '0');
+						j += 1;
 					}
+
+					if(j > i){
+						numbers[count++] = number;
+					}
+
+					wordStart = false;
 				}
 			}
 
-			if(values.size() == 3) {
-				x = values[0];
-				y = values[1];
-				z = values[2];
-				done = true;
+			if(count == 3){
+				x = numbers[0];
+				y = numbers[1];
+				z = numbers[2];
+				result = true;
 			}
 		}
 		wxTheClipboard->Close();
 	}
-	return done;
+	return result;
 }
 
 bool posToClipboard(int x, int y, int z, int format)

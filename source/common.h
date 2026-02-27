@@ -72,7 +72,7 @@ std::wstring string2wstring(const std::string& utf8string);
 std::string wstring2string(const std::wstring& widestring);
 
 // Gets position values from ClipBoard
-bool posFromClipboard(int& x, int& y, int& z);
+bool posFromClipboard(int &x, int &y, int &z);
 bool posToClipboard(int x, int y, int z, int format);
 bool posToClipboard(int fromx, int fromy, int fromz, int tox, int toy, int toz);
 

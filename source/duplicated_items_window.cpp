@@ -61,11 +61,6 @@ DuplicatedItemsWindow::DuplicatedItemsWindow(wxWindow* parent) :
 DuplicatedItemsWindow::~DuplicatedItemsWindow()
 {
 	Clear();
-
-	items_list->Unbind(wxEVT_LISTBOX, &DuplicatedItemsWindow::OnClickResult, this);
-	remove_button->Unbind(wxEVT_BUTTON, &DuplicatedItemsWindow::OnClickRemove, this);
-	remove_all_button->Unbind(wxEVT_BUTTON, &DuplicatedItemsWindow::OnClickRemoveAll, this);
-	export_button->Unbind(wxEVT_BUTTON, &DuplicatedItemsWindow::OnClickExport, this);
 }
 
 void DuplicatedItemsWindow::StartSearch(bool selection)

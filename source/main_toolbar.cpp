@@ -167,11 +167,11 @@ MainToolBar::MainToolBar(wxWindow* parent, wxAuiManager* manager)
 
 	standard_toolbar->Bind(wxEVT_COMMAND_MENU_SELECTED, &MainToolBar::OnStandardButtonClick, this);
 	brushes_toolbar->Bind(wxEVT_COMMAND_MENU_SELECTED, &MainToolBar::OnBrushesButtonClick, this);
-	x_control->Bind(wxEVT_TEXT_PASTE, &MainToolBar::OnPastePositionText, this);
+	x_control->Bind(wxEVT_TEXT_PASTE, &MainToolBar::OnPositionPasteText, this);
 	x_control->Bind(wxEVT_KEY_UP, &MainToolBar::OnPositionKeyUp, this);
-	y_control->Bind(wxEVT_TEXT_PASTE, &MainToolBar::OnPastePositionText, this);
+	y_control->Bind(wxEVT_TEXT_PASTE, &MainToolBar::OnPositionPasteText, this);
 	y_control->Bind(wxEVT_KEY_UP, &MainToolBar::OnPositionKeyUp, this);
-	z_control->Bind(wxEVT_TEXT_PASTE, &MainToolBar::OnPastePositionText, this);
+	z_control->Bind(wxEVT_TEXT_PASTE, &MainToolBar::OnPositionPasteText, this);
 	z_control->Bind(wxEVT_KEY_UP, &MainToolBar::OnPositionKeyUp, this);
 	go_button->Bind(wxEVT_BUTTON, &MainToolBar::OnPositionButtonClick, this);
 	sizes_toolbar->Bind(wxEVT_COMMAND_MENU_SELECTED, &MainToolBar::OnSizesButtonClick, this);
@@ -182,17 +182,7 @@ MainToolBar::MainToolBar(wxWindow* parent, wxAuiManager* manager)
 
 MainToolBar::~MainToolBar()
 {
-	standard_toolbar->Unbind(wxEVT_COMMAND_MENU_SELECTED, &MainToolBar::OnStandardButtonClick, this);
-	brushes_toolbar->Unbind(wxEVT_COMMAND_MENU_SELECTED, &MainToolBar::OnBrushesButtonClick, this);
-	x_control->Unbind(wxEVT_TEXT_PASTE, &MainToolBar::OnPastePositionText, this);
-	x_control->Unbind(wxEVT_KEY_UP, &MainToolBar::OnPositionKeyUp, this);
-	y_control->Unbind(wxEVT_TEXT_PASTE, &MainToolBar::OnPastePositionText, this);
-	y_control->Unbind(wxEVT_KEY_UP, &MainToolBar::OnPositionKeyUp, this);
-	z_control->Unbind(wxEVT_TEXT_PASTE, &MainToolBar::OnPastePositionText, this);
-	z_control->Unbind(wxEVT_KEY_UP, &MainToolBar::OnPositionKeyUp, this);
-	go_button->Unbind(wxEVT_BUTTON, &MainToolBar::OnPositionButtonClick, this);
-	sizes_toolbar->Unbind(wxEVT_COMMAND_MENU_SELECTED, &MainToolBar::OnSizesButtonClick, this);
-	indicators_toolbar->Unbind(wxEVT_COMMAND_MENU_SELECTED, &MainToolBar::OnIndicatorsButtonClick, this);
+	// no-op
 }
 
 void MainToolBar::UpdateButtons()
@@ -230,7 +220,7 @@ void MainToolBar::UpdateButtons()
 
 	if(has_map) {
 		Position minPos = g_editor.map.getMinPosition();
-		Position maxPos = g_editor.map.getMinPosition();
+		Position maxPos = g_editor.map.getMaxPosition();
 		x_control->SetRange(minPos.x, maxPos.x);
 		y_control->SetRange(minPos.y, maxPos.y);
 	}
@@ -537,15 +527,16 @@ void MainToolBar::OnPositionKeyUp(wxKeyEvent& event)
 	event.Skip();
 }
 
-void MainToolBar::OnPastePositionText(wxClipboardTextEvent& event)
+void MainToolBar::OnPositionPasteText(wxClipboardTextEvent& event)
 {
 	Position position;
-	if(posFromClipboard(position.x, position.y, position.z)) {
+	if(posFromClipboard(position.x, position.y, position.z)){
 		x_control->SetIntValue(position.x);
 		y_control->SetIntValue(position.y);
 		z_control->SetIntValue(position.z);
-	} else
+	}else{
 		event.Skip();
+	}
 }
 
 void MainToolBar::OnSizesButtonClick(wxCommandEvent& event)
