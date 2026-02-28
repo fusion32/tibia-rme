@@ -1669,7 +1669,7 @@ void Editor::checkTileItems(bool showDialog)
 
 			if(numBank > 1 || numBottom > 1 || numTop > 1){
 				wxString warning;
-				warning << "Multiple unique items detected: ";
+				warning << "Multiple exclusive items detected on the same tile: ";
 				if(numBank > 1)   warning << " " << numBank   << " BANK";
 				if(numBottom > 1) warning << " " << numBottom << " BOTTOM";
 				if(numTop > 1)    warning << " " << numTop    << " TOP";

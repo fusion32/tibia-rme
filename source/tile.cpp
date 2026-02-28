@@ -238,26 +238,27 @@ void Tile::addItem(Item *item, bool replaceUnique /*= true*/)
 	}
 }
 
-static Item *ReverseItemGroup(Item *first, int stackPriority){
-	Item *prev = NULL;
-	Item *it   = first;
-	while(it != NULL && it->getStackPriority() == stackPriority){
-		Item *next = it->next;
-		it->next = prev;
-		prev = it;
-		it = next;
-	}
+static Item *ReverseStackGroup(Item *first){
+	if(first != NULL){
+		Item *prev        = first;
+		Item *it          = first->next;
+		int stackPriority = first->getStackPriority();
+		while(it != NULL && it->getStackPriority() == stackPriority){
+			Item *next = it->next;
+			it->next = prev;
+			prev = it;
+			it = next;
+		}
 
-	// NOTE(fusion): After reversing, `prev` should contain the new head of the
-	// group, while `first`, the new tail. We still need to make sure we don't
-	// break the link to the remainder of the list so we need to adjust the tail
-	// to point to the first object of the next group.
-	if(prev != NULL && prev != first){
-		ASSERT(first != NULL);
-		first->next = it;
-		first = prev;
+		// NOTE(fusion): After reversing, `prev` should contain the new head of the
+		// group, while `first`, the new tail. We still need to make sure we don't
+		// break the link to the remainder of the list so we need to adjust the tail
+		// to point to the first object of the next group.
+		if(prev != first){
+			first->next = it;
+			first       = prev;
+		}
 	}
-
 	return first;
 }
 
@@ -274,7 +275,7 @@ int Tile::addItems(Item *first, bool replaceUnique /*= true*/)
 		if(stackPriority != prevStackPriority){
 			if(stackPriority == STACK_PRIORITY_CREATURE
 					|| stackPriority == STACK_PRIORITY_LOW){
-				item = ReverseItemGroup(item, stackPriority);
+				item = ReverseStackGroup(item);
 			}
 
 			prevStackPriority = stackPriority;
