@@ -48,7 +48,7 @@
 
 BEGIN_EVENT_TABLE(MapCanvas, wxGLCanvas)
 	EVT_KEY_DOWN(MapCanvas::OnKeyDown)
-	EVT_KEY_DOWN(MapCanvas::OnKeyUp)
+	EVT_KEY_UP(MapCanvas::OnKeyUp)
 
 	// Mouse events
 	EVT_MOTION(MapCanvas::OnMouseMove)

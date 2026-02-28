@@ -29,16 +29,8 @@
 
 void Tile::clear(void)
 {
-	while(Item *it = items){
-		items = it->next;
-		it->next = NULL;
-		delete it;
-	}
-
-	delete creature;
-
-	items    = NULL;
-	creature = NULL;
+	clearItems();
+	clearCreature();
 	houseId  = 0;
 	flags    = 0;
 }
@@ -197,7 +189,16 @@ Item *Tile::popSelectedItems()
 	return result;
 }
 
-void Tile::addItem(Item *item)
+void Tile::clearItems(void)
+{
+	while(Item *it = items){
+		items = it->next;
+		it->next = NULL;
+		delete it;
+	}
+}
+
+void Tile::addItem(Item *item, bool replaceUnique /*= true*/)
 {
 	if(!item) return;
 
@@ -208,14 +209,20 @@ void Tile::addItem(Item *item)
 	// reverse order, to allow the list to contain the most important/immediate
 	// objects in its first ~10 entries.
 
-	bool append = (stackPriority == STACK_PRIORITY_CLIP);
-	bool replace = (stackPriority == STACK_PRIORITY_BANK
-			|| stackPriority == STACK_PRIORITY_BOTTOM
-			|| stackPriority == STACK_PRIORITY_TOP);
+	bool replace = replaceUnique
+			&& (stackPriority == STACK_PRIORITY_BANK
+				|| stackPriority == STACK_PRIORITY_BOTTOM
+				|| stackPriority == STACK_PRIORITY_TOP);
+
+	bool append = !replace
+			&& (stackPriority == STACK_PRIORITY_BANK
+				|| stackPriority == STACK_PRIORITY_CLIP
+				|| stackPriority == STACK_PRIORITY_BOTTOM
+				|| stackPriority == STACK_PRIORITY_TOP);
 
 	Item **it = &items;
 	while(*it != NULL){
-		if(append  && (*it)->getStackPriority() >  stackPriority) break;
+		if( append && (*it)->getStackPriority() >  stackPriority) break;
 		if(!append && (*it)->getStackPriority() >= stackPriority) break;
 		it = &(*it)->next;
 	}
@@ -254,7 +261,7 @@ static Item *ReverseItemGroup(Item *first, int stackPriority){
 	return first;
 }
 
-int Tile::addItems(Item *first)
+int Tile::addItems(Item *first, bool replaceUnique /*= true*/)
 {
 	// NOTE(fusion): We want a stable insertion and we know that CREATURE and LOW
 	// stack priority objects are stored in reverse order. This means we also need
@@ -275,7 +282,7 @@ int Tile::addItems(Item *first)
 
 		first = item->next;
 		item->next = NULL;
-		addItem(item);
+		addItem(item, replaceUnique);
 		count += 1;
 	}
 	return count;

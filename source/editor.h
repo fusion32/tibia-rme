@@ -106,6 +106,8 @@ public:
 	void AddRecentFile(const wxString &file);
 	std::vector<wxString> GetRecentFiles();
 
+	void SaveWindow();
+	void LoadWindow();
 	void SavePerspective();
 	void LoadPerspective();
 
@@ -320,7 +322,7 @@ public:
 	void borderizeMap(bool showDialog);
 	void randomizeMap(bool showDialog);
 	void clearInvalidHouseTiles(bool showDialog);
-	void clearModifiedTileState(bool showDialog);
+	void checkTileItems(bool showDialog);
 
 	// Draw using the current brush to the target position
 	// alt is whether the ALT key is pressed

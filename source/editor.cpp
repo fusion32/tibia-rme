@@ -152,6 +152,17 @@ bool Editor::OpenProject(const wxString &dir)
 
 			mapWindow->SetScreenCenterPosition(mapPosition);
 		}
+
+		{ // NOTE(fusion): Load editor mode.
+			EditorMode savedMode = (EditorMode)g_settings.getInteger(Config::EDITOR_MODE);
+			if(savedMode != mode){
+				if(savedMode == SELECTION_MODE){
+					SetSelectionMode();
+				}else if(savedMode == DRAWING_MODE){
+					SetDrawingMode();
+				}
+			}
+		}
 	}
 
 	return true;
@@ -175,6 +186,10 @@ bool Editor::CloseProject(void)
 		std::ostringstream ss;
 		ss << mapWindow->GetScreenCenterPosition();
 		g_settings.setString(Config::MAP_POSITION, ss.str());
+	}
+
+	{ // NOTE(fusion): Save editor mode.
+		g_settings.setInteger(Config::EDITOR_MODE, mode);
 	}
 
 	SavePerspective();
@@ -280,6 +295,10 @@ bool Editor::LoadProject(wxString dir)
 		}
 	}
 
+	if(true){ // g_settings.getBoolean(Config::CHECK_TILE_ITEMS)
+		checkTileItems(true);
+	}
+
 	projectDir = std::move(dir);
 	return true;
 }
@@ -353,6 +372,26 @@ static void DockPaneIfOffscreen(wxAuiPaneInfo &pane){
 	}
 }
 
+void Editor::SaveWindow()
+{
+	// TODO(fusion): Perhaps there is a way to get the un-maximized size? Trying
+	// to call root->Maximize(false) here doesn't work because the state change
+	// isn't immediate.
+	g_settings.setInteger(Config::WINDOW_WIDTH, root->GetSize().GetWidth());
+	g_settings.setInteger(Config::WINDOW_HEIGHT, root->GetSize().GetHeight());
+	g_settings.setInteger(Config::WINDOW_MAXIMIZED, root->IsMaximized());
+}
+
+void Editor::LoadWindow()
+{
+	if(g_settings.getBoolean(Config::WINDOW_MAXIMIZED)){
+		root->Maximize();
+	}else{
+		root->SetSize(g_settings.getInteger(Config::WINDOW_WIDTH),
+					  g_settings.getInteger(Config::WINDOW_HEIGHT));
+	}
+}
+
 void Editor::LoadPerspective()
 {
 	std::vector<std::string> palette_list;
@@ -417,9 +456,6 @@ void Editor::LoadPerspective()
 
 void Editor::SavePerspective()
 {
-	g_settings.setInteger(Config::WINDOW_MAXIMIZED, root->IsMaximized());
-	g_settings.setInteger(Config::WINDOW_WIDTH, root->GetSize().GetWidth());
-	g_settings.setInteger(Config::WINDOW_HEIGHT, root->GetSize().GetHeight());
 	g_settings.setInteger(Config::MINIMAP_VISIBLE, minimap? 1: 0);
 	g_settings.setInteger(Config::ACTIONS_HISTORY_VISIBLE, actions_history_window ? 1 : 0);
 
@@ -1602,6 +1638,40 @@ void Editor::clearInvalidHouseTiles(bool showDialog)
 	// TODO(fusion): See what happens.
 
 	if(showDialog) {
+		DestroyLoadBar();
+	}
+}
+
+void Editor::checkTileItems(bool showDialog)
+{
+	if(showDialog){
+		CreateLoadBar("Checking tile items...");
+	}
+
+	map.forEachTile(
+		[this](Tile *tile, double progress){
+			int numBank   = 0;
+			int numBottom = 0;
+			int numTop    = 0;
+			for(Item *item = tile->items; item != NULL; item = item->next){
+				if(item->getFlag(BANK))   numBank += 1;
+				if(item->getFlag(BOTTOM)) numBottom += 1;
+				if(item->getFlag(TOP))    numTop += 1;
+			}
+
+			if(numBank > 1 || numBottom > 1 || numTop > 1){
+				wxString warning;
+				warning << "Multiple unique items detected: ";
+				if(numBank > 1)   warning << " " << numBank   << " BANK";
+				if(numBottom > 1) warning << " " << numBottom << " BOTTOM";
+				if(numTop > 1)    warning << " " << numTop    << " TOP";
+				g_editor.Warning(warning, ProblemSource::FromPosition(tile->pos));
+			}
+
+			SetLoadDone((int)(progress * 100.0));
+		});
+
+	if(showDialog){
 		DestroyLoadBar();
 	}
 }

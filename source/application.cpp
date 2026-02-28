@@ -101,6 +101,7 @@ bool Application::OnInit()
 	SetTopWindow(g_editor.root);
 	g_editor.SetTitle("");
 	g_editor.LoadRecentFiles();
+	g_editor.LoadWindow();
 	g_editor.LoadPerspective();
 
     wxIcon icon(rme_icon);
@@ -172,6 +173,7 @@ void Application::Unload()
 	g_editor.CloseProject();
 	g_editor.SaveHotkeys();
 	g_editor.SaveRecentFiles();
+	g_editor.SaveWindow();
 	g_settings.save();
 }
 

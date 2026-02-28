@@ -221,6 +221,19 @@ static void SaveTile(ScriptWriter *script, int offsetX, int offsetY, const Tile 
 void Map::loadSector(SectorType type, MapSector *sector, Script *script){
 	ASSERT(sector != NULL && script != NULL);
 
+#if _DEBUG
+	// NOTE(fusion): Baseline sectors should be loaded before others.
+	if(type == SECTOR_BASELINE){
+		for(Tile &tile: sector->tiles){
+			if(tile.items != NULL || tile.flags != 0){
+				g_editor.Warning("Non-empty tile while loading baseline sector",
+						ProblemSource::FromPosition(tile.pos));
+				tile.clear();
+			}
+		}
+	}
+#endif
+
 	// NOTE(fusion): A full patch replaces the whole sector.
 	if(type == SECTOR_FULL_PATCH){
 		for(Tile &tile: sector->tiles){
@@ -279,7 +292,18 @@ void Map::loadSector(SectorType type, MapSector *sector, Script *script){
 				tile->setTileFlag(TILE_FLAG_PROTECTIONZONE);
 			}else if(ident == "content"){
 				script->readSymbol('=');
-				tile->addItems(LoadObjects(script));
+
+				// IMPORTANT(fusion): BANK, BOTTOM, and TOP items are supposed to be unique
+				// per tile, but some maps saved with other editors may contain multiple of
+				// on the same tile.
+				//  Tile::addItems will usually enforce this uniqueness by replacing existing
+				// items, but using it while loading a tile can be problematic, specially for
+				// a baseline tile which would suddenly find itself in a modified state but
+				// not flagged as DIRTY.
+				//  For that reason, Tile::addItems now has a `replaceUnique` parameter that
+				// is true by default and only explicitly set to false here to make sure we
+				// preserve all loaded items.
+				tile->addItems(LoadObjects(script), false);
 			}else{
 				script->error("unknown map flag");
 				break;
