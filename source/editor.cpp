@@ -256,6 +256,8 @@ bool Editor::LoadProject(wxString dir)
 
 	dir = NormalizeDir(dir);
 
+	ClearProblems();
+
 	{
 		ScopedLoadingBar loadingBar("Loading menu bar...");
 		menubar->Load(dir);
@@ -554,6 +556,12 @@ ProblemsWindow *Editor::ShowProblemsWindow()
 
 	aui_manager->Update();
 	return problems_window;
+}
+
+void Editor::ClearProblems(void){
+	if(problems_window){
+		problems_window->Clear();
+	}
 }
 
 void Editor::Notice(wxString message, ProblemSource source /*= {}*/){

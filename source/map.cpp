@@ -294,8 +294,8 @@ void Map::loadSector(SectorType type, MapSector *sector, Script *script){
 				script->readSymbol('=');
 
 				// IMPORTANT(fusion): BANK, BOTTOM, and TOP items are supposed to be unique
-				// per tile, but some maps saved with other editors may contain multiple of
-				// on the same tile.
+				// per tile, but some maps saved with other editors may contain multiple on
+				// the same tile.
 				//  Tile::addItems will usually enforce this uniqueness by replacing existing
 				// items, but using it while loading a tile can be problematic, specially for
 				// a baseline tile which would suddenly find itself in a modified state but

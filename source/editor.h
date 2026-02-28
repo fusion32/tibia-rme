@@ -170,6 +170,7 @@ public:
 	void HideActionsWindow();
 
 	ProblemsWindow *ShowProblemsWindow();
+	void ClearProblems(void);
 	void Notice(wxString message, ProblemSource source = {});
 	void Warning(wxString message, ProblemSource source = {});
 	void Error(wxString message, ProblemSource source = {});
