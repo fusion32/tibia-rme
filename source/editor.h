@@ -323,7 +323,7 @@ public:
 	void borderizeMap(bool showDialog);
 	void randomizeMap(bool showDialog);
 	void clearInvalidHouseTiles(bool showDialog);
-	void checkTileItems(bool showDialog);
+	void checkMap(bool showDialog);
 
 	// Draw using the current brush to the target position
 	// alt is whether the ALT key is pressed

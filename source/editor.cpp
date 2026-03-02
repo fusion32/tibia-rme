@@ -297,8 +297,8 @@ bool Editor::LoadProject(wxString dir)
 		}
 	}
 
-	if(true){ // g_settings.getBoolean(Config::CHECK_TILE_ITEMS)
-		checkTileItems(true);
+	if(true){ // g_settings.getBoolean(Config::CHECK_MAP_TILES)
+		map.checkTiles(true);
 	}
 
 	projectDir = std::move(dir);
@@ -1646,40 +1646,6 @@ void Editor::clearInvalidHouseTiles(bool showDialog)
 	// TODO(fusion): See what happens.
 
 	if(showDialog) {
-		DestroyLoadBar();
-	}
-}
-
-void Editor::checkTileItems(bool showDialog)
-{
-	if(showDialog){
-		CreateLoadBar("Checking tile items...");
-	}
-
-	map.forEachTile(
-		[this](Tile *tile, double progress){
-			int numBank   = 0;
-			int numBottom = 0;
-			int numTop    = 0;
-			for(Item *item = tile->items; item != NULL; item = item->next){
-				if(item->getFlag(BANK))   numBank += 1;
-				if(item->getFlag(BOTTOM)) numBottom += 1;
-				if(item->getFlag(TOP))    numTop += 1;
-			}
-
-			if(numBank > 1 || numBottom > 1 || numTop > 1){
-				wxString warning;
-				warning << "Multiple exclusive items detected on the same tile: ";
-				if(numBank > 1)   warning << " " << numBank   << " BANK";
-				if(numBottom > 1) warning << " " << numBottom << " BOTTOM";
-				if(numTop > 1)    warning << " " << numTop    << " TOP";
-				g_editor.Warning(warning, ProblemSource::FromPosition(tile->pos));
-			}
-
-			SetLoadDone((int)(progress * 100.0));
-		});
-
-	if(showDialog){
 		DestroyLoadBar();
 	}
 }

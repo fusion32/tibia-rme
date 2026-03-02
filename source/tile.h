@@ -71,8 +71,10 @@ struct Tile {
 	Item *popSelectedItems();
 
 	void clearItems(void);
-	void addItem(Item *item, bool replaceUnique = true);
-	int addItems(Item *first, bool replaceUnique = true);
+	void addItem(Item *item);
+	int addItems(Item *first);
+	void setItems(Item *first);
+	void sortItems(void);
 	void clearCreature(void);
 	void placeCreature(int raceId, int spawnRadius, int spawnAmount, int spawnInterval);
 	int getIndexOf(Item *item) const;

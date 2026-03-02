@@ -272,11 +272,6 @@ void Map::loadSector(SectorType type, MapSector *sector, Script *script){
 				tile->setTileFlag(TILE_FLAG_DIRTY);
 			}
 
-			// NOTE(fusion): An overlay add changes on top of specified tiles.
-			if(type == SECTOR_OVERLAY){
-				tile->setTileFlag(TILE_FLAG_DIRTY);
-			}
-
 		}else if(script->token.kind == TOKEN_IDENTIFIER){
 			if(tile == NULL){
 				script->error("coordinate expected");
@@ -293,17 +288,11 @@ void Map::loadSector(SectorType type, MapSector *sector, Script *script){
 			}else if(ident == "content"){
 				script->readSymbol('=');
 
-				// IMPORTANT(fusion): BANK, BOTTOM, and TOP items are supposed to be unique
-				// per tile, but some maps saved with other editors may contain multiple on
-				// the same tile.
-				//  Tile::addItems will usually enforce this uniqueness by replacing existing
-				// items, but using it while loading a tile can be problematic, specially for
-				// a baseline tile which would suddenly find itself in a modified state but
-				// not flagged as DIRTY.
-				//  For that reason, Tile::addItems now has a `replaceUnique` parameter that
-				// is true by default and only explicitly set to false here to make sure we
-				// preserve all loaded items.
-				tile->addItems(LoadObjects(script), false);
+				// IMPORTANT(fusion): We want to preserve the exact same order specified on
+				// disk. Trying to cull multiple BANK/BOTTOM/TOP items, or fix item ordering
+				// here is a mistake and could cause de-sync issues, specially with baseline
+				// tiles, which don't get flagged as dirty at this stage.
+				tile->setItems(LoadObjects(script));
 			}else{
 				script->error("unknown map flag");
 				break;
@@ -1086,23 +1075,68 @@ Tile *Map::getOrCreateTile(int x, int y, int z)
 	return sector->getTile(offsetX, offsetY);
 }
 
+void Map::checkTiles(bool showDialog /*= false*/)
+{
+	if(showDialog){
+		g_editor.CreateLoadBar("Checking tiles...");
+	}
+
+	forEachTile(
+		[](Tile *tile, double progress){
+			int numBank   = 0;
+			int numBottom = 0;
+			int numTop    = 0;
+			bool ordered  = true;
+			int prevStackPriority = -1;
+			for(Item *item = tile->items; item != NULL; item = item->next){
+				int stackPriority = item->getStackPriority();
+				if(stackPriority == STACK_PRIORITY_BANK)   numBank += 1;
+				if(stackPriority == STACK_PRIORITY_BOTTOM) numBottom += 1;
+				if(stackPriority == STACK_PRIORITY_TOP)    numTop += 1;
+				if(stackPriority < prevStackPriority)      ordered = false;
+				prevStackPriority = stackPriority;
+			}
+
+			if(numBank > 1 || numBottom > 1 || numTop > 1){
+				wxString warning;
+				warning << "Multiple exclusive items detected on the same tile: ";
+				if(numBank   > 1) warning << " " << numBank   << " BANK";
+				if(numBottom > 1) warning << " " << numBottom << " BOTTOM";
+				if(numTop    > 1) warning << " " << numTop    << " TOP";
+				g_editor.Warning(warning, ProblemSource::FromPosition(tile->pos));
+			}
+
+			// TODO(fusion): Do we actually want to automatically sort items here?
+			if(!ordered){
+				tile->sortItems();
+				tile->setTileFlag(TILE_FLAG_DIRTY);
+				g_editor.Notice(wxString() << "Fixed issues with item ordering",
+						ProblemSource::FromPosition(tile->pos));
+			}
+
+			g_editor.SetLoadDone((int)(progress * 100.0));
+		});
+
+	if(showDialog){
+		g_editor.DestroyLoadBar();
+	}
+}
+
 void Map::cleanInvalidTiles(bool showDialog /*= false*/)
 {
-	if(showDialog)
+	if(showDialog){
 		g_editor.CreateLoadBar("Removing invalid tiles...");
+	}
 
-	double nextUpdate = 0.0;
 	removeItems(
-		[&nextUpdate, showDialog](const Item *item, double progress){
-			if(showDialog && progress >= nextUpdate){
-				g_editor.SetLoadDone((int)(progress * 100.0));
-				nextUpdate = progress + 0.01;
-			}
+		[](const Item *item, double progress){
+			g_editor.SetLoadDone((int)(progress * 100.0));
 			return !ItemTypeExists(item->getID());
 		});
 
-	if(showDialog)
+	if(showDialog){
 		g_editor.DestroyLoadBar();
+	}
 }
 
 bool Map::exportMinimap(const wxFileName &filename,

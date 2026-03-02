@@ -198,7 +198,7 @@ void Tile::clearItems(void)
 	}
 }
 
-void Tile::addItem(Item *item, bool replaceUnique /*= true*/)
+void Tile::addItem(Item *item)
 {
 	if(!item) return;
 
@@ -209,12 +209,11 @@ void Tile::addItem(Item *item, bool replaceUnique /*= true*/)
 	// reverse order, to allow the list to contain the most important/immediate
 	// objects in its first ~10 entries.
 
-	bool replace = replaceUnique
-			&& (stackPriority == STACK_PRIORITY_BANK
+	bool exclusive = (stackPriority == STACK_PRIORITY_BANK
 				|| stackPriority == STACK_PRIORITY_BOTTOM
 				|| stackPriority == STACK_PRIORITY_TOP);
 
-	bool append = !replace
+	bool append = !exclusive
 			&& (stackPriority == STACK_PRIORITY_BANK
 				|| stackPriority == STACK_PRIORITY_CLIP
 				|| stackPriority == STACK_PRIORITY_BOTTOM
@@ -227,7 +226,7 @@ void Tile::addItem(Item *item, bool replaceUnique /*= true*/)
 		it = &(*it)->next;
 	}
 
-	if(replace && *it != NULL && (*it)->getStackPriority() == stackPriority){
+	if(exclusive && *it != NULL && (*it)->getStackPriority() == stackPriority){
 		item->next = (*it)->next;
 		(*it)->next = NULL;
 		delete (*it);
@@ -262,7 +261,7 @@ static Item *ReverseStackGroup(Item *first){
 	return first;
 }
 
-int Tile::addItems(Item *first, bool replaceUnique /*= true*/)
+int Tile::addItems(Item *first)
 {
 	// NOTE(fusion): We want a stable insertion and we know that CREATURE and LOW
 	// stack priority objects are stored in reverse order. This means we also need
@@ -283,10 +282,41 @@ int Tile::addItems(Item *first, bool replaceUnique /*= true*/)
 
 		first = item->next;
 		item->next = NULL;
-		addItem(item, replaceUnique);
+		addItem(item);
 		count += 1;
 	}
 	return count;
+}
+
+void Tile::setItems(Item *first)
+{
+	// NOTE(fusion): This is similar to Tile::addItems except that we clear the
+	// items first, and preserve the order of the provided list.
+	clearItems();
+	items = first;
+}
+
+void Tile::sortItems(void)
+{
+	Item *first = items;
+	items = NULL;
+
+	// NOTE(fusion): The loop body here is very similar to Tile::addItem, except
+	// we make sure all items are preserved, and that we always APPEND to make the
+	// algorithm stable.
+	while(Item *item = first){
+		first = item->next;
+
+		Item **it = &items;
+		int stackPriority = item->getStackPriority();
+		while((*it) != NULL){
+			if((*it)->getStackPriority() > stackPriority) break;
+			it = &(*it)->next;
+		}
+
+		item->next = *it;
+		*it = item;
+	}
 }
 
 void Tile::clearCreature(void){

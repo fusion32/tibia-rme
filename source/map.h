@@ -33,7 +33,6 @@ enum SectorType {
 	SECTOR_BASELINE,
 	SECTOR_PATCH,
 	SECTOR_FULL_PATCH,
-	SECTOR_OVERLAY,
 };
 
 inline bool PositionValid(int x, int y, int z){
@@ -193,6 +192,7 @@ struct Map {
 	}
 
 
+	void checkTiles(bool showDialog = false);
 	void cleanInvalidTiles(bool showDialog = false);
 	bool exportMinimap(const wxFileName &filename,
 						int floor = rme::MapGroundLayer,
