@@ -93,8 +93,7 @@ protected:
 
 	template<class T>
 	bool getType(T& ref) {
-		fread(&ref, sizeof(ref), 1, file);
-		return ferror(file) == 0;
+		return fread(&ref, 1, sizeof(T), file) == sizeof(T);
 	}
 };
 

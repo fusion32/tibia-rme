@@ -1354,7 +1354,8 @@ void MapCanvas::OnWheel(wxMouseEvent& event)
 		}
 	} else {
 		double diff = -((double)event.GetWheelRotation() / (double)event.GetWheelDelta())
-				* g_settings.getFloat(Config::ZOOM_SPEED);
+				* (double)g_settings.getFloat(Config::ZOOM_SPEED) * 0.1;
+
 		double oldzoom = zoom;
 		zoom += diff;
 
