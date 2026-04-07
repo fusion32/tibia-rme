@@ -1776,6 +1776,7 @@ void MapCanvas::OnRotateItem(wxCommandEvent& WXUNUSED(event))
 	ASSERT(newItem->getID() == item->getID());
 	newItem->transform(newItem->getAttribute(ROTATETARGET));
 	action->changeTile(std::move(newTile));
+	action->commit();
 
 	g_editor.updateActions();
 	g_editor.RefreshView();

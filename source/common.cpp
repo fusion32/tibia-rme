@@ -268,38 +268,27 @@ bool posFromClipboard(int &x, int &y, int &z)
 
 bool posToClipboard(int x, int y, int z, int format)
 {
-	if(!wxTheClipboard->Open())
-		return false;
+	bool result = false;
+	if(wxTheClipboard->Open()){
+		wxTextDataObject* data = NULL;
+		switch (format) {
+			case 0: data = newd wxTextDataObject(wxString::Format("[%d,%d,%d]",                     x, y, z)); break;
+			case 1: data = newd wxTextDataObject(wxString::Format("{x = %d, y = %d, z = %d}",       x, y, z)); break;
+			case 2: data = newd wxTextDataObject(wxString::Format("{\"x\":%d, \"y\":%d, \"z\":%d}", x, y, z)); break;
+			case 3: data = newd wxTextDataObject(wxString::Format("%d, %d, %d",                     x, y, z)); break;
+			case 4: data = newd wxTextDataObject(wxString::Format("(%d, %d, %d)",                   x, y, z)); break;
+			case 5: data = newd wxTextDataObject(wxString::Format("Position(%d, %d, %d)",           x, y, z)); break;
+			default: break;
+		}
 
-	wxTextDataObject* data = new wxTextDataObject();
+		if(data != NULL){
+			result = wxTheClipboard->SetData(data);
+		}
 
-	switch (format) {
-		case 0:
-			data->SetText(wxString::Format("[%d,%d,%d]", x, y, z));
-			break;
-		case 1:
-			data->SetText(wxString::Format("{x = %d, y = %d, z = %d}", x, y, z));
-			break;
-		case 2:
-			data->SetText(wxString::Format("{\"x\":%d, \"y\":%d, \"z\":%d}", x, y, z));
-			break;
-		case 3:
-			data->SetText(wxString::Format("%d, %d, %d", x, y, z));
-			break;
-		case 4:
-			data->SetText(wxString::Format("(%d, %d, %d)", x, y, z));
-			break;
-		case 5:
-			data->SetText(wxString::Format("Position(%d, %d, %d)", x, y, z));
-			break;
-		default:
-			wxTheClipboard->Close();
-			return false;
+		wxTheClipboard->Close();
 	}
 
-	wxTheClipboard->SetData(data);
-	wxTheClipboard->Close();
-	return true;
+	return result;
 }
 
 bool posToClipboard(int fromx, int fromy, int fromz, int tox, int toy, int toz)
