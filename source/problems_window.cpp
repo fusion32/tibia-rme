@@ -3,7 +3,8 @@
 #include "editor.h"
 
 ProblemsWindow::ProblemsWindow(wxWindow *parent) :
-	wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_VIRTUAL)
+	wxListCtrl(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_VIRTUAL),
+	updateTimer(this)
 {
 	// TODO(fusion): Maybe there is a better way to fill the last column without
 	// manually doing it in a wxEVT_SIZE event, or setting a large enough value
@@ -13,6 +14,7 @@ ProblemsWindow::ProblemsWindow(wxWindow *parent) :
 	InsertColumn(2, "Message",  wxLIST_FORMAT_LEFT, 1000);
 
 	Bind(wxEVT_LIST_ITEM_SELECTED, &ProblemsWindow::OnItemSelected, this);
+	Bind(wxEVT_TIMER, &ProblemsWindow::OnTimer, this);
 }
 
 ProblemsWindow::~ProblemsWindow(void){
@@ -43,7 +45,7 @@ static wxString GetSourceString(const ProblemSource &source){
 
 wxString ProblemsWindow::OnGetItemText(long item, long column) const {
 	wxString result = wxEmptyString;
-	if(item >= 0 && item <= (long)problems.size()){
+	if(item >= 0 && item < (long)problems.size()){
 		switch(column){
 			case 0: result = GetSeverityString(problems[item].severity); break;
 			case 1: result = GetSourceString(problems[item].source); break;
@@ -55,7 +57,7 @@ wxString ProblemsWindow::OnGetItemText(long item, long column) const {
 
 void ProblemsWindow::OnItemSelected(wxListEvent &event){
 	long item = event.GetIndex();
-	if(item >= 0 && item <= (long)problems.size()){
+	if(item >= 0 && item < (long)problems.size()){
 		const ProblemSource &source = problems[item].source;
 		if(source.type == PROBLEM_SOURCE_POSITION){
 			g_editor.SetScreenCenterPosition(source.position);
@@ -63,13 +65,28 @@ void ProblemsWindow::OnItemSelected(wxListEvent &event){
 	}
 }
 
-void ProblemsWindow::Insert(ProblemSeverity severity, ProblemSource source, wxString message){
-	problems.emplace_back(severity, source, std::move(message));
+void ProblemsWindow::OnTimer(wxTimerEvent &event){
+	(void)event;
+
+	// IMPORTANT(fusion): `SetItemCount` can be expensive on Windows, specially
+	// when loading a map with lots of problems. Moving it to a delayed callback
+	// should help improve load times then.
 	SetItemCount((long)problems.size());
 }
 
+void ProblemsWindow::Insert(ProblemSeverity severity, ProblemSource source, wxString message){
+	problems.emplace_back(severity, source, std::move(message));
+
+	if(!updateTimer.IsRunning()){
+		updateTimer.Start(500, wxTIMER_ONE_SHOT);
+	}
+}
+
 void ProblemsWindow::Clear(void){
-	SetItemCount(0);
 	problems.clear();
+
+	if(!updateTimer.IsRunning()){
+		updateTimer.Start(500, wxTIMER_ONE_SHOT);
+	}
 }
 

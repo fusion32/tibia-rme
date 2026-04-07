@@ -78,10 +78,12 @@ public:
 	~ProblemsWindow(void) override;
 	wxString OnGetItemText(long item, long column) const override;
 	void OnItemSelected(wxListEvent &event);
+	void OnTimer(wxTimerEvent &event);
 	void Insert(ProblemSeverity severity, ProblemSource source, wxString message);
 	void Clear(void);
 
 private:
+	wxTimer updateTimer = {};
 	std::vector<Problem> problems = {};
 };
 
