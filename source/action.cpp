@@ -213,12 +213,18 @@ ActionGroup *ActionQueue::createGroup(ActionType type, int groupWindow /*= 0*/)
 	while(usedMemory > maxMemory && !groups.empty()){
 		curMemory -= groups.front().memsize();
 		groups.pop_front();
+		if(cursor > 0){
+			cursor -= 1;
+		}
 	}
 #endif
 
 	size_t maxQueueSize = g_settings.getInteger(Config::UNDO_SIZE);
 	while(groups.size() > maxQueueSize){
 		groups.pop_front();
+		if(cursor > 0){
+			cursor -= 1;
+		}
 	}
 
 	time_t timeNow = time(NULL);

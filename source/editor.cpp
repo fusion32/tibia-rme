@@ -483,24 +483,31 @@ void Editor::SavePerspective()
 	toolbar->SavePerspective();
 }
 
-void Editor::HideSearchWindow()
-{
-	if(search_result_window) {
-		aui_manager->GetPane(search_result_window).Show(false);
-		aui_manager->Update();
-	}
-}
-
 SearchResultWindow* Editor::ShowSearchWindow()
 {
 	if(search_result_window == nullptr) {
 		search_result_window = newd SearchResultWindow(root);
 		aui_manager->AddPane(search_result_window, wxAuiPaneInfo().Caption("Search Results"));
-	} else {
-		aui_manager->GetPane(search_result_window).Show();
+		aui_manager->Update();
+	}else{
+		wxAuiPaneInfo &pane = aui_manager->GetPane(search_result_window);
+		if(!pane.IsShown()){
+			pane.Show();
+			aui_manager->Update();
+		}
 	}
-	aui_manager->Update();
 	return search_result_window;
+}
+
+void Editor::HideSearchWindow()
+{
+	if(search_result_window) {
+		wxAuiPaneInfo &pane = aui_manager->GetPane(search_result_window);
+		if(pane.IsShown()){
+			pane.Show(false);
+			aui_manager->Update();
+		}
+	}
 }
 
 DuplicatedItemsWindow* Editor::ShowDuplicatedItemsWindow()
@@ -508,40 +515,59 @@ DuplicatedItemsWindow* Editor::ShowDuplicatedItemsWindow()
 	if(!duplicated_items_window) {
 		duplicated_items_window = new DuplicatedItemsWindow(root);
 		aui_manager->AddPane(duplicated_items_window, wxAuiPaneInfo().Caption("Duplicated Items"));
-	} else {
-		aui_manager->GetPane(duplicated_items_window).Show();
+		aui_manager->Update();
+	}else{
+		wxAuiPaneInfo &pane = aui_manager->GetPane(duplicated_items_window);
+		if(!pane.IsShown()){
+			pane.Show();
+			aui_manager->Update();
+		}
 	}
-	aui_manager->Update();
 	return duplicated_items_window;
 }
 
 void Editor::HideDuplicatedItemsWindow()
 {
 	if(duplicated_items_window) {
-		aui_manager->GetPane(duplicated_items_window).Show(false);
-		aui_manager->Update();
+		wxAuiPaneInfo &pane = aui_manager->GetPane(duplicated_items_window);
+		if(pane.IsShown()){
+			pane.Show(false);
+			aui_manager->Update();
+		}
 	}
 }
 
 ActionsHistoryWindow* Editor::ShowActionsWindow()
 {
+	bool shouldRefresh = false;
 	if(!actions_history_window) {
 		actions_history_window = new ActionsHistoryWindow(root);
 		aui_manager->AddPane(actions_history_window, wxAuiPaneInfo().Caption("Actions History"));
-	} else {
-		aui_manager->GetPane(actions_history_window).Show();
+		shouldRefresh = true;
+	}else{
+		wxAuiPaneInfo &pane = aui_manager->GetPane(actions_history_window);
+		if(!pane.IsShown()){
+			pane.Show();
+			shouldRefresh = true;
+		}
 	}
 
-	aui_manager->Update();
-	actions_history_window->RefreshActions();
+	if(shouldRefresh){
+		aui_manager->Update();
+		actions_history_window->RefreshActions();
+	}
+
 	return actions_history_window;
 }
 
 void Editor::HideActionsWindow()
 {
 	if(actions_history_window) {
-		aui_manager->GetPane(actions_history_window).Show(false);
-		aui_manager->Update();
+		wxAuiPaneInfo &pane = aui_manager->GetPane(actions_history_window);
+		if(pane.IsShown()){
+			pane.Show(false);
+			aui_manager->Update();
+		}
 	}
 }
 
@@ -550,11 +576,14 @@ ProblemsWindow *Editor::ShowProblemsWindow()
 	if(!problems_window){
 		problems_window = new ProblemsWindow(root);
 		aui_manager->AddPane(problems_window, wxAuiPaneInfo().Caption("Problems").Bottom().Floatable(false).Dock());
+		aui_manager->Update();
 	}else{
-		aui_manager->GetPane(problems_window).Show();
+		wxAuiPaneInfo &pane = aui_manager->GetPane(problems_window);
+		if(!pane.IsShown()){
+			pane.Show();
+			aui_manager->Update();
+		}
 	}
-
-	aui_manager->Update();
 	return problems_window;
 }
 
@@ -695,21 +724,28 @@ void Editor::CreateMinimap()
 	if(!IsProjectOpen())
 		return;
 
-	if(minimap) {
-		aui_manager->GetPane(minimap).Show(true);
-	} else {
+	if(!minimap){
 		minimap = newd MinimapWindow(root);
 		minimap->Show(true);
 		aui_manager->AddPane(minimap, wxAuiPaneInfo().Caption("Minimap"));
+		aui_manager->Update();
+	}else{
+		wxAuiPaneInfo &pane = aui_manager->GetPane(minimap);
+		if(!pane.IsShown()){
+			pane.Show();
+			aui_manager->Update();
+		}
 	}
-	aui_manager->Update();
 }
 
 void Editor::HideMinimap()
 {
 	if(minimap) {
-		aui_manager->GetPane(minimap).Show(false);
-		aui_manager->Update();
+		wxAuiPaneInfo &pane = aui_manager->GetPane(minimap);
+		if(pane.IsShown()){
+			pane.Show(false);
+			aui_manager->Update();
+		}
 	}
 }
 

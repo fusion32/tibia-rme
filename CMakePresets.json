@@ -3,10 +3,12 @@
   "configurePresets": [
     {
       "name": "vcpkg",
+      "generator": "Ninja",
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
     },
     {
       "name": "vcpkg-windows-static",
+      "generator": "Ninja",
       "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
       "cacheVariables": {
         "VCPKG_TARGET_TRIPLET": "x64-windows-static",

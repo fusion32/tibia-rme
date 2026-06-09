@@ -32,7 +32,8 @@ public:
 private:
 	const wxBitmap& getIconBitmap(ActionType type) const;
 
-	wxBitmap open_bitmap;
+	wxBitmap start_bitmap;
+	wxBitmap unknown_bitmap;
 	wxBitmap move_bitmap;
 	wxBitmap remote_bitmap;
 	wxBitmap select_bitmap;

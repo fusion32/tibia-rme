@@ -163,6 +163,10 @@ void Selection::remove(Action *action, Tile *tile)
 
 void Selection::clear(Action *action)
 {
+	if(tiles.empty()){
+		return;
+	}
+
 	if(action == NULL){
 		action = g_editor.actionQueue.createAction(ACTION_UNSELECT);
 		for(Tile *tile: tiles){

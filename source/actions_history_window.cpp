@@ -24,7 +24,8 @@ HistoryListBox::HistoryListBox(wxWindow* parent) :
 	wxVListBox(parent, wxID_ANY)
 {
 	wxSize icon_size = FROM_DIP(parent, wxSize(16, 16));
-	open_bitmap = wxArtProvider::GetBitmap(wxART_FILE_OPEN, wxART_TOOLBAR, icon_size);
+	start_bitmap = wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_TOOLBAR, icon_size);
+	unknown_bitmap = wxArtProvider::GetBitmap(wxART_QUESTION, wxART_TOOLBAR, icon_size);
 	move_bitmap = wxArtProvider::GetBitmap(ART_MOVE, wxART_LIST, icon_size);
 	remote_bitmap = wxArtProvider::GetBitmap(ART_REMOTE, wxART_LIST, icon_size);
 	select_bitmap = wxArtProvider::GetBitmap(ART_SELECT, wxART_LIST, icon_size);
@@ -50,14 +51,16 @@ void HistoryListBox::OnDrawItem(wxDC& dc, const wxRect& rect, size_t index) cons
 		dc.SetTextForeground(*wxBLACK);
 	}
 
-	const ActionGroup *group = g_editor.actionQueue.getGroup(index - 1);
-	if(group) {
+	if(index == 0){
+		dc.DrawBitmap(start_bitmap, rect.GetX() + 4, rect.GetY() + 4, true);
+		dc.DrawText("History Start", rect.GetX() + 28, rect.GetY() + 3);
+	}else if(const ActionGroup *group = g_editor.actionQueue.getGroup(index - 1)){
 		const wxBitmap& bitmap = getIconBitmap(group->type);
 		dc.DrawBitmap(bitmap, rect.GetX() + 4, rect.GetY() + 4, true);
 		dc.DrawText(group->getLabel(), rect.GetX() + 28, rect.GetY() + 3);
-	} else {
-		dc.DrawBitmap(open_bitmap, rect.GetX() + 4, rect.GetY() + 4, true);
-		dc.DrawText("Open Map", rect.GetX() + 28, rect.GetY() + 3);
+	}else{
+		dc.DrawBitmap(unknown_bitmap, rect.GetX() + 4, rect.GetY() + 4, true);
+		dc.DrawText("Unknown", rect.GetX() + 28, rect.GetY() + 3);
 	}
 }
 
